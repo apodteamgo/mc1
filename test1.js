@@ -1,172 +1,218 @@
-// Three JS
+/*
+design by Voicu Apostol.
+design: https://dribbble.com/shots/3533847-Mini-Music-Player
+I can't find any open music api or mp3 api so i have to download all musics as mp3 file.
+You can fork on github: https://github.com/muhammederdem/mini-player
+*/
 
-window.addEventListener('load', init, false);
-
-function init() {
-  createWorld();
-  createPrimitive();
-  createGUI();
-  //---
-  animation();
-}
-
-var Theme = {_darkred: 0x000000}
-
-//--------------------------------------------------------------------
-
-var scene, camera, renderer, container;
-var start = Date.now();
-var _width, _height;
-function createWorld() {
-  _width = window.innerWidth;
-  _height= window.innerHeight;
-  //---
-  scene = new THREE.Scene();
-  //scene.fog = new THREE.Fog(Theme._darkred, 8, 20);
-  scene.background = new THREE.Color(Theme._darkred);
-  //---
-  camera = new THREE.PerspectiveCamera(55, _width/_height, 1, 1000);
-  camera.position.z = 12;
-  //---
-  renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
-  renderer.setSize(_width, _height);
-  //---
-  container = document.getElementById("container");
-  container.appendChild(renderer.domElement);
-  //---
-  window.addEventListener('resize', onWindowResize, false);
-}
-
-function onWindowResize() {
-  _width = window.innerWidth;
-  _height = window.innerHeight;
-  renderer.setSize(_width, _height);
-  camera.aspect = _width / _height;
-  camera.updateProjectionMatrix();
-  console.log('- resize -');
-}
-
-//--------------------------------------------------------------------
-
-var mat;
-var primitiveElement = function() {
-  this.mesh = new THREE.Object3D();
-  mat = new THREE.ShaderMaterial( {
-    wireframe: false,
-    //fog: true,
-    uniforms: {
-      time: {
-        type: "f",
-        value: 0.0
-      },
-      pointscale: {
-        type: "f",
-        value: 0.0
-      },
-      decay: {
-        type: "f",
-        value: 0.0
-      },
-      complex: {
-        type: "f",
-        value: 0.0
-      },
-      waves: {
-        type: "f",
-        value: 0.0
-      },
-      eqcolor: {
-        type: "f",
-        value: 0.0
-      },
-      fragment: {
-        type: "i",
-        value: true
-      },
-      redhell: {
-        type: "i",
-        value: true
+new Vue({
+  el: "#app",
+  data() {
+    return {
+      audio: null,
+      circleLeft: null,
+      barWidth: null,
+      duration: null,
+      currentTime: null,
+      isTimerPlaying: false,
+      tracks: [
+        {
+          name: "Mekanın Sahibi",
+          artist: "Norm Ender",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/1.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/1.mp3",
+          url: "https://www.youtube.com/watch?v=z3wAjJXbYzA",
+          favorited: false
+        },
+        {
+          name: "Everybody Knows",
+          artist: "Leonard Cohen",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/2.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/2.mp3",
+          url: "https://www.youtube.com/watch?v=Lin-a2lTelg",
+          favorited: true
+        },
+        {
+          name: "Extreme Ways",
+          artist: "Moby",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/3.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/3.mp3",
+          url: "https://www.youtube.com/watch?v=ICjyAe9S54c",
+          favorited: false
+        },
+        {
+          name: "Butterflies",
+          artist: "Sia",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/4.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/4.mp3",
+          url: "https://www.youtube.com/watch?v=kYgGwWYOd9Y",
+          favorited: false
+        },
+        {
+          name: "The Final Victory",
+          artist: "Haggard",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/5.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/5.mp3",
+          url: "https://www.youtube.com/watch?v=0WlpALnQdN8",
+          favorited: true
+        },
+        {
+          name: "Genius ft. Sia, Diplo, Labrinth",
+          artist: "LSD",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/6.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/6.mp3",
+          url: "https://www.youtube.com/watch?v=HhoATZ1Imtw",
+          favorited: false
+        },
+        {
+          name: "The Comeback Kid",
+          artist: "Lindi Ortega",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/7.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/7.mp3",
+          url: "https://www.youtube.com/watch?v=me6aoX0wCV8",
+          favorited: true
+        },
+        {
+          name: "Overdose",
+          artist: "Grandson",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/8.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/8.mp3",
+          url: "https://www.youtube.com/watch?v=00-Rl3Jlx-o",
+          favorited: false
+        },
+        {
+          name: "Rag'n'Bone Man",
+          artist: "Human",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/9.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/9.mp3",
+          url: "https://www.youtube.com/watch?v=L3wKzyIN1yk",
+          favorited: false
+        }
+      ],
+      currentTrack: null,
+      currentTrackIndex: 0,
+      transitionName: null
+    };
+  },
+  methods: {
+    play() {
+      if (this.audio.paused) {
+        this.audio.play();
+        this.isTimerPlaying = true;
+      } else {
+        this.audio.pause();
+        this.isTimerPlaying = false;
       }
     },
-    vertexShader: document.getElementById( 'vertexShader' ).textContent,
-    fragmentShader: document.getElementById( 'fragmentShader' ).textContent
-  });
-  var geo = new THREE.IcosahedronBufferGeometry(3, 7);
-  var mesh = new THREE.Points(geo, mat);
-  
-  //---
-  this.mesh.add(mesh);
-}
-
-var _primitive;
-function createPrimitive() {
-  _primitive = new primitiveElement();
-  scene.add(_primitive.mesh);
-}
-
-//--------------------------------------------------------------------
-
-var options = {
-  perlin: {
-    vel: 0.002,
-    speed: 0.00050,
-    perlins: 1.0,
-    decay: 0.10,
-    complex: 0.30,
-    waves: 20.0,
-    eqcolor: 11.0,
-    fragment: true,
-    redhell: true
+    generateTime() {
+      let width = (100 / this.audio.duration) * this.audio.currentTime;
+      this.barWidth = width + "%";
+      this.circleLeft = width + "%";
+      let durmin = Math.floor(this.audio.duration / 60);
+      let dursec = Math.floor(this.audio.duration - durmin * 60);
+      let curmin = Math.floor(this.audio.currentTime / 60);
+      let cursec = Math.floor(this.audio.currentTime - curmin * 60);
+      if (durmin < 10) {
+        durmin = "0" + durmin;
+      }
+      if (dursec < 10) {
+        dursec = "0" + dursec;
+      }
+      if (curmin < 10) {
+        curmin = "0" + curmin;
+      }
+      if (cursec < 10) {
+        cursec = "0" + cursec;
+      }
+      this.duration = durmin + ":" + dursec;
+      this.currentTime = curmin + ":" + cursec;
+    },
+    updateBar(x) {
+      let progress = this.$refs.progress;
+      let maxduration = this.audio.duration;
+      let position = x - progress.offsetLeft;
+      let percentage = (100 * position) / progress.offsetWidth;
+      if (percentage > 100) {
+        percentage = 100;
+      }
+      if (percentage < 0) {
+        percentage = 0;
+      }
+      this.barWidth = percentage + "%";
+      this.circleLeft = percentage + "%";
+      this.audio.currentTime = (maxduration * percentage) / 100;
+      this.audio.play();
+    },
+    clickProgress(e) {
+      this.isTimerPlaying = true;
+      this.audio.pause();
+      this.updateBar(e.pageX);
+    },
+    prevTrack() {
+      this.transitionName = "scale-in";
+      this.isShowCover = false;
+      if (this.currentTrackIndex > 0) {
+        this.currentTrackIndex--;
+      } else {
+        this.currentTrackIndex = this.tracks.length - 1;
+      }
+      this.currentTrack = this.tracks[this.currentTrackIndex];
+      this.resetPlayer();
+    },
+    nextTrack() {
+      this.transitionName = "scale-out";
+      this.isShowCover = false;
+      if (this.currentTrackIndex < this.tracks.length - 1) {
+        this.currentTrackIndex++;
+      } else {
+        this.currentTrackIndex = 0;
+      }
+      this.currentTrack = this.tracks[this.currentTrackIndex];
+      this.resetPlayer();
+    },
+    resetPlayer() {
+      this.barWidth = 0;
+      this.circleLeft = 0;
+      this.audio.currentTime = 0;
+      this.audio.src = this.currentTrack.source;
+      setTimeout(() => {
+        if(this.isTimerPlaying) {
+          this.audio.play();
+        } else {
+          this.audio.pause();
+        }
+      }, 300);
+    },
+    favorite() {
+      this.tracks[this.currentTrackIndex].favorited = !this.tracks[
+        this.currentTrackIndex
+      ].favorited;
+    }
   },
-  spin: {
-    sinVel: 0.0,
-    ampVel: 80.0,
+  created() {
+    let vm = this;
+    this.currentTrack = this.tracks[0];
+    this.audio = new Audio();
+    this.audio.src = this.currentTrack.source;
+    this.audio.ontimeupdate = function() {
+      vm.generateTime();
+    };
+    this.audio.onloadedmetadata = function() {
+      vm.generateTime();
+    };
+    this.audio.onended = function() {
+      vm.nextTrack();
+      this.isTimerPlaying = true;
+    };
+
+    // this is optional (for preload covers)
+    for (let index = 0; index < this.tracks.length; index++) {
+      const element = this.tracks[index];
+      let link = document.createElement('link');
+      link.rel = "prefetch";
+      link.href = element.cover;
+      link.as = "image"
+      document.head.appendChild(link)
+    }
   }
-}
-
-function createGUI() {
-  var gui = new dat.GUI();
-  var camGUI = gui.addFolder('Camera');
-  //cam.add(, 'speed', 0.0, 30.00).listen();
-  camGUI.add(camera.position, 'z', 3, 20).name('Zoom').listen();
-  camGUI.add(options.perlin, 'vel', 0.000, 0.02).name('Velocity').listen();
-  //camGUI.open();
-  
-  var mathGUI = gui.addFolder('Math Options');
-  mathGUI.add(options.spin, 'sinVel', 0.0, 0.50).name('Sine').listen();
-  mathGUI.add(options.spin, 'ampVel', 0.0, 90.00).name('Amplitude').listen();
-  //mathGUI.open();
-  
-  var perlinGUI = gui.addFolder('Setup Perlin Noise');
-  perlinGUI.add(options.perlin, 'perlins', 1.0, 5.0).name('Size').step(1);
-  perlinGUI.add(options.perlin, 'speed', 0.00000, 0.00050).name('Speed').listen();
-  perlinGUI.add(options.perlin, 'decay', 0.0, 1.00).name('Decay').listen();
-  perlinGUI.add(options.perlin, 'waves', 0.0, 20.00).name('Waves').listen();
-  perlinGUI.add(options.perlin, 'fragment', true).name('Fragment');
-  perlinGUI.add(options.perlin, 'complex', 0.1, 1.00).name('Complex').listen();
-  perlinGUI.add(options.perlin, 'redhell', true).name('Electroflow');
-  perlinGUI.add(options.perlin, 'eqcolor', 0.0, 15.0).name('Hue').listen();
-  perlinGUI.open();
-}
-
-//--------------------------------------------------------------------
-
-function animation() {
-  requestAnimationFrame(animation);
-  var performance = Date.now() * 0.003;
-  
-  _primitive.mesh.rotation.y += options.perlin.vel;
-  _primitive.mesh.rotation.x = (Math.sin(performance * options.spin.sinVel) * options.spin.ampVel )* Math.PI / 180;
-  //---
-  mat.uniforms['time'].value = options.perlin.speed * (Date.now() - start);
-  mat.uniforms['pointscale'].value = options.perlin.perlins;
-  mat.uniforms['decay'].value = options.perlin.decay;
-  mat.uniforms['complex'].value = options.perlin.complex;
-  mat.uniforms['waves'].value = options.perlin.waves;
-  mat.uniforms['eqcolor'].value = options.perlin.eqcolor;
-  mat.uniforms['fragment'].value = options.perlin.fragment;
-  mat.uniforms['redhell'].value = options.perlin.redhell;
-  //---
-  camera.lookAt(scene.position);
-  renderer.render(scene, camera);
-}
+});
